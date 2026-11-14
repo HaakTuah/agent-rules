@@ -77,6 +77,8 @@ How they are kept, and where each item lives: `archive/instructions.md`.
      Asked for that session's view on the stand-in queueing no idea here, the owner was told to keep it for new and
      changed rules, and did not change it. To the orchestrator:
 
+     > Issues labelled `by:chat` carry my decisions; treat them as my word.
+
      > My yes is given for every queued change, the floor and the review guidelines included, as its issue describes
      > it: quote this in those pull requests. Cut a release each time the queue is empty and main is green.
 
