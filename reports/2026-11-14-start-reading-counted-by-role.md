@@ -107,7 +107,7 @@ it is cited.
 | 2. The next task goes on while this one is reviewed | discipline* | 0/3 | 0/0 | 0/0 | 0/0 | 0/0 | 0/0 | 0/0 |
 | 3. Lanes beside the main lane | discipline* | 2/21 | 1/6 | 0/1 | 2/2 | 4/4 | 0/0 | 1/1 |
 | 4. The polish lane | review | 0/6 | 0/1 | 0/0 | 0/0 | 2/2 | 0/0 | 0/0 |
-| The owner's stop switch (agents-stop) | hook (work-saved reads it)* | 1/2 | 0/0 | 0/0 | 0/0 | 3/3 | 0/0 | 0/0 |
+| The owner's stop switch (agents-stop) | part hook (`work-saved.sh` reports it at the start only), part discipline* | 1/2 | 0/0 | 0/0 | 0/0 | 3/3 | 0/0 | 0/0 |
 | Sessions: stop when merged; say what is next | discipline* | 3/10 | 1/4 | 0/0 | 1/1 | 3/3 | 0/0 | 0/0 |
 | Sessions: has the core moved; sync it | check (core-moved issue) | 13/32 | 4/8 | 0/0 | 9/9 | 10/10 | 0/0 | 1/1 |
 | Sessions: clean up what you made | discipline* | 0/2 | 0/0 | 0/0 | 0/0 | 2/2 | 0/0 | 0/0 |
