@@ -413,7 +413,9 @@ function main(argv) {
   }
   const here = path.dirname(fileURLToPath(import.meta.url));
   const root = execFileSync("git", ["rev-parse", "--show-toplevel"], { cwd: here, encoding: "utf8" }).trim();
-  const self = path.relative(root, here).split(path.sep).join("/");
+  // where this script lies in the repository, as git itself says it (a path worked out from the two folders' names can
+  // differ in spelling, as a short name of Windows' does from the long one git gives)
+  const self = execFileSync("git", ["rev-parse", "--show-prefix"], { cwd: here, encoding: "utf8" }).trim();
   const specs = opts.specs.length ? opts.specs : self.startsWith("core/") ? [".", ":!core/"] : ["."];
   const listed = execFileSync("git", ["ls-files", "-z", "--", ...specs], { cwd: root, encoding: "utf8", maxBuffer: 1 << 28 }).split("\0").filter(Boolean);
   const texts = {}, other = {};
