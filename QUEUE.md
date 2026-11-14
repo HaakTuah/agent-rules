@@ -12,6 +12,7 @@ rule 3 asks for, in the line's own pull request, which waits for it unmerged whi
 
 | Issue | Who | Waits on |
 | --- | --- | --- |
+| #260 | rule builder | |
 | #241 | builder | |
 | #240 | builder | |
 | #196 | builder | |
@@ -34,9 +35,11 @@ rule 3 asks for, in the line's own pull request, which waits for it unmerged whi
 | #252 | rule builder | #247 |
 | #235 | rule builder | #247 |
 | #249 | rule builder | #247, #235 and the owner's yes (the floor) |
+| #250 | rule builder | #249 |
 | #185 | builder | |
 | #246 | rule builder | #247 and the reports of #245 |
 | #253 | rule builder | #247, #246, the reports of #245 and the owner's yes (the review guidelines) |
+| #259 | a builder that built none of the batch | every line above it |
 
 ## Beside any line
 
@@ -46,12 +49,12 @@ They read and change no rule.
 | --- | --- | --- |
 | #245 | builder | |
 | #243 | builder | |
+| #261 | builder | |
 
 ## Not taken up
 
 | Issue | Who | Waits on |
 | --- | --- | --- |
-| #250 | the owner | two decisions of the owner's |
 | #204 | builder | a stop that was ignored |
 | #163 | the owner | on hold |
 | #187 | the owner | on hold |
