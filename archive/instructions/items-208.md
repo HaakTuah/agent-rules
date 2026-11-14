@@ -60,3 +60,31 @@ How they are kept, and where each item lives: `archive/instructions.md`.
      nothing unless every check on `main`'s newest commit has passed. Read narrowly, as the word for the one release
      that follows `release-5`: the words could also stand for every batch, and a release once cut is never moved or
      deleted, so every later release waits for the owner's word again until the owner says otherwise.
+
+211. **14 November 2026** (the core; the first three quotes in a chat with a session the owner works with, not the
+     design session, as that session quoted them on issue #260; the last to the orchestrator, in the message that
+     started it). Told that, as the queue was first built, three pull requests would stand open for a yes the owner had
+     given by queueing their issues, that every release after the first would wait for the owner's word again, and
+     that what the owner said through a chat session after that day would count as that session's own:
+
+     > When something is queued, it is because I want it done. No waiting.
+
+     > should do a cut everytime the queue is empty, it means it has implemented everything I want from it if there is
+     > nothing left in issues to be queued also.
+
+     > "by:chat" essentially means we. I very rarely bother to write directly. You sre my interface.
+
+     Asked for that session's view on the stand-in queueing no idea here, the owner was told to keep it for new and
+     changed rules, and did not change it. To the orchestrator:
+
+     > Issues labelled `by:chat` carry my decisions; treat them as my word.
+
+     > My yes is given for every queued change, the floor and the review guidelines included, as its issue describes
+     > it: quote this in those pull requests. Cut a release each time the queue is empty and main is green.
+
+     Behind "Queued means wanted" in `AGENTS.md`, where the yes that queued an issue is the yes floor rule 3 asks for in
+     its pull request, relayed word for word and covering the change as the issue describes it; behind the release in
+     "One batch, then one release", now for every batch, which widens item 210; behind what the chat session records
+     counting as the owner's word on any day, in "Whose words an issue holds"; and behind what joins the queue without
+     the owner: a bug, a test, a check for a rule that already stands, a task the scheduled look opens and a small
+     finding of an audit, while a new or changed rule still joins only on the owner's yes.
