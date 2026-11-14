@@ -90,12 +90,12 @@ function pull(commits, onMain = []) {
 }
 // The check's verdict, with the pull request checked out as GitHub merges it into the base's tip; the event names
 // `eventBase`, the tip itself unless an older base is given.
-function check({ dir, first }, { terms = TERMS, title = "A change", body = "Words.", branch = "change", stale = false, key = keyFile, isPrivate = false, opener = null } = {}) {
+function check({ dir, first }, { terms = TERMS, title = "A change", body = "Words.", branch = "change", stale = false, key = keyFile, isPrivate = false, opener = null, locale = null } = {}) {
   const tip = git(dir, ["rev-parse", "main"]);
   git(dir, ["checkout", "-q", "--detach", "main"]);
   git(dir, ["merge", "-q", "--no-ff", "--no-edit", "change"], { ...GITHUB, ...(opener ? { GIT_AUTHOR_NAME: opener } : {}) });
   const github = { event_name: "pull_request", repository: "someone/project", ref: "refs/pull/1/merge", event: { pull_request: { title, body, head: { ref: branch }, base: { sha: stale ? first : tip } }, repository: { private: isPrivate } } };
-  const base = { ...env, ...ME, STAND_IN_KEY: key, PATH: `${stubs}${path.delimiter}${env.PATH ?? env.Path ?? ""}` };
+  const base = { ...env, ...ME, ...(locale ? { LC_ALL: locale } : {}), STAND_IN_KEY: key, PATH: `${stubs}${path.delimiter}${env.PATH ?? env.Path ?? ""}` };
   const [job] = runWorkflow(workflow, { github, secrets: { PERSONAL_TERMS: terms }, base, workspace: () => dir, uses: { "actions/checkout": () => {} }, temp: tmp });
   return { passed: job.passed, out: job.steps.map(s => s.out).join("") };
 }
@@ -212,7 +212,8 @@ if (process.platform !== "win32") {
   const [, token, inside] = /^::stop-commands::([0-9a-f]{32})\n([^]*?)^::\1::$/m.exec(odd.out) ?? [];
   ok(!odd.passed && token && inside === "::notice::odd?name.md:1\n", "a file's name made like a command is printed only where GitHub reads no command", odd.out);
 }
-fails("a term in a line added in Latin-1, taken out again", pull([[{ "b.md": Buffer.from(`caf\u00e9 ${term}\n`, "latin1") }], [{ "b.md": "x\n" }]]));
+// (under a UTF-8 locale, as GitHub's runners have, where grep would take such a line for binary)
+fails("a term in a line added in Latin-1, taken out again", pull([[{ "b.md": Buffer.from(`caf\u00e9 ${term}\n`, "latin1") }], [{ "b.md": "x\n" }]]), { locale: "C.UTF-8" });
 passes("a term inside the ids of three session links side by side", pull([[{ "b.md": `${link(term)} ${link(other)} ${link(term)}\n` }]]));
 fails("a term on the same line as a session link, in a file", pull([[{ "b.md": `${link(term)} and ${other}\n` }]]));
 fails("a term on the same line as a session link, in the title", pull([[{ "b.md": "x\n" }]]), { title: `${link(term)} ${term}` });
