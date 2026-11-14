@@ -7,7 +7,7 @@
 // in the title, description or branch name; a file of text a .gitattributes marks binary, main's own too; a term listed
 // with blanks or a Windows line end around it; a commit dated before the rule too, since a date is whatever its maker
 // writes; each failure saying how the session takes the term out; a term in a link like a Claude Code session's but of
-// another shape or host, or beside one (#261).
+// another shape or host, inside another address, or beside one (#261).
 // What passes: none of these; a term only in a file whose content is binary (not read); one only inside a Claude Code
 // session link's random id, wherever the check reads text; a file on main named with
 // a term before the rule, deleted or renamed away; only in the
@@ -199,7 +199,18 @@ fails("a term in a session link's id one character longer", pull([[{ "b.md": "x\
 fails("a term in a session link's id one character shorter", pull([[{ "b.md": `${link(term, 21)}\n` }]]));
 fails("a term in a session link's id holding a character outside base58", pull([[{ "b.md": "x\n" }]]), { body: link(`0${term}`) });
 fails("a term in such an id under another host", pull([[{ "b.md": `${link(term, 22, "example.invalid/code/session_")}\n` }]]));
+fails("a term in such an id in another address's path", pull([[{ "b.md": `${link(term, 22, "example.invalid/claude.ai/code/session_")}\n` }]]));
+fails("a term in such an id in another address's query", pull([[{ "b.md": "x\n" }]]), { body: `https://example.invalid/?u=${link(term)}` });
+passes("a term inside the ids of two session links side by side, and of one in Markdown's brackets", pull([[{ "b.md": `${link(term)} ${link(other)}\n[here](${link(term)}) <${link(other)}>\n` }]]));
 fails("a term right after a session link's id", pull([[{ "b.md": "x\n" }, {}, signed(`${link("")}${term}`)]]));
+fails("a term right after a session link's id and a letter outside plain ASCII", pull([[{ "b.md": `${link(term)}\u00e9\n` }]]));
+// a hit left out beside one kept: only the second file is named, and a name is never printed as a command
+const kept = check(pull([[{ "b.md": `${link(term)}\n`, "c.md": `x ${term}\n` }]]));
+ok(!kept.passed && /^c\.md:1$/m.test(kept.out) && !/^b\.md:/m.test(kept.out), "a file whose term is only in a session link's id is left out, one beside it still named", kept.out);
+if (process.platform !== "win32") {
+  const odd = check(pull([[{ "::notice::odd\nname.md": `x ${term}\n` }]]));
+  ok(!odd.passed && !/^::/m.test(odd.out) && /\?:notice::odd\?name\.md:1/.test(odd.out), "a file's name made like a command is printed as none", odd.out);
+}
 fails("a term on the same line as a session link, in a file", pull([[{ "b.md": `${link(term)} and ${other}\n` }]]));
 fails("a term on the same line as a session link, in the title", pull([[{ "b.md": "x\n" }]]), { title: `${link(term)} ${term}` });
 passes("a term only in a file whose content is binary (not read: the check's header says so)", pull([[{ "a.bin": `\u0000${term}\u0000` }]]));

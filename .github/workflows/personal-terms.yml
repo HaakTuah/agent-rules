@@ -18,7 +18,8 @@
 # `git grep -I`, a diff's "Binary files differ"), pictures included, whatever a .gitattributes says, which the check
 # never reads. It prints only where a term was found (file and line, a file whose name holds a term by its line alone,
 # or the commit), never the term. Of all it reads, it leaves unread only the random id of a link to a Claude Code
-# session (claude.ai/code/session_01 and 22 characters of base58, nothing of a word's characters after them), which a
+# session (https://claude.ai/code/session_01 and 22 characters of base58, a whole link, a blank, the line's end or a
+# mark of punctuation after it), which a
 # tool writes at the end of every builder's commit message and description: such a run of characters holds a short term
 # by chance and is no one's personal information, while the rest of the link and of its line is read (#261). Each failure says how the session takes the term out, one the project held before the
 # check read it too: of what a project held before a check read more, a listed term alone fails rather than being
@@ -68,9 +69,11 @@ jobs:
           # (each term without the blanks around it, a carriage return among them, and no empty one)
           printf '%s\n' "$TERMS" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e '/^$/d' > "$list"
           found=0
-          # (a Claude Code session's id, of its one shape alone, taken out of what is read: one of any other length,
-          # characters or host stays; LC_ALL=C, so that each range is of those letters and digits alone, in any locale)
-          unlinked() { LC_ALL=C sed -E 's#(claude\.ai/code/session_01)[1-9A-HJ-NP-Za-km-z]{22}([^0-9A-Za-z_-]|$)#\1\2#g'; }
+          # (a Claude Code session's id, of its one shape alone, taken out of what is read: a whole link, starting a
+          # line or after a blank or an opening mark, so none inside another address; one of any other length,
+          # characters or host stays; each taken out in turn, so that links side by side are each found; LC_ALL=C, so
+          # that each range is of those letters and digits alone, in any locale)
+          unlinked() { LC_ALL=C sed -E -e ':a' -e 's#(^|[[:space:](<["`])(https://claude\.ai/code/session_01)[1-9A-HJ-NP-Za-km-z]{22}([[:space:].,;:!?)>"`/*]|$)#\1\2\3#' -e 'ta'; }
           # (git with no attributes at all, read from the empty tree, so a .gitattributes of the pull request's own
           # cannot have a file of text taken for binary and left unread; git older than 2.40 fails the check)
           empty=$(git hash-object -t tree /dev/null); g() { git --attr-source="$empty" "$@"; }
@@ -79,10 +82,12 @@ jobs:
           # (each hit as git gives it: the file's name and the line's number each ended by a NUL, the line by a newline;
           # one is dropped only where grep finds a term in the line and none once a session's id is out, so a hit grep
           # would not make alone, as in a case it folds otherwise than git, still fails; what is printed is held to the
-          # list first: a file whose name holds a term is named by its line alone, a line number of digits or none)
+          # list first: a file whose name holds a term is named by its line alone, a line number of digits or none, and a
+          # name's control characters and a colon it starts with shown as "?", so that no name is read as a command)
           hits=$(while IFS= read -r -d '' name && IFS= read -r -d '' line && IFS= read -r text; do
             if printf '%s\n' "$text" | grep -q -i -F -f "$list" && ! printf '%s\n' "$text" | unlinked | grep -q -i -F -f "$list"; then continue; fi
             if printf '%s\n' "$name" | grep -q -i -F -f "$list"; then name='(a file whose name holds a term)'; fi
+            name=${name//[[:cntrl:]]/?}; case $name in :*) name="?${name#:}" ;; esac
             case $line in '' | *[!0-9]*) line='?' ;; esac; printf '%s:%s\n' "$name" "$line"
           done < "$RUNNER_TEMP/hits")
           if [ -n "$hits" ]; then
@@ -143,7 +148,8 @@ jobs:
               if [ "$parents" -gt 2 ]; then how=--cc plus="^[+]{$parents}"; else how=--remerge-diff plus='^[+]'; fi
               if ! patch=$(g show --format= --patch "$how" --no-ext-diff --no-textconv --no-color "$c"); then
                 echo "git could not show what $short adds (it needs git 2.40 or later)"; found=1
-              elif printf '%s\n' "$patch" | grep -E "$plus" | unlinked | grep -q -i -F -f "$list"; then added="$added $short"; fi
+              # (each line read without its own marks of an added line, and no more of it, so a link can start it)
+              elif printf '%s\n' "$patch" | grep -E "$plus" | sed -E "s/$plus//" | unlinked | grep -q -i -F -f "$list"; then added="$added $short"; fi
               # (the names of every file it writes, not of one it deletes, so that an older name is taken out freely, as
               # git holds them: empty, renamed or binary ones too, none quoted; a merge's,
               # those its own resolution writes)
