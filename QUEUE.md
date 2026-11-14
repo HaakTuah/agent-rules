@@ -5,14 +5,14 @@ issue, who builds it and what it waits on; the issue holds the rest, its conditi
 nothing is next, and a line leaves in the pull request that closes its issue.
 
 **Who:** *builder*, any builder session; *rule builder*, a builder on Opus, who writes the rule from the owner's words
-on the issue; *the owner*, no session takes it up before the owner's own word. **The owner's yes** is the one floor
-rule 3 asks for, in the line's own pull request, which waits for it unmerged while the next line goes on.
+on the issue; *the owner*, no session takes it up before the owner's own word. **The owner's yes** that floor rule 3
+asks for is the one given when the line's issue was queued, relayed into its pull request (`AGENTS.md`, "Queued means
+wanted").
 
 ## In order
 
 | Issue | Who | Waits on |
 | --- | --- | --- |
-| #260 | rule builder | |
 | #241 | builder | |
 | #240 | builder | |
 | #196 | builder | |
@@ -21,7 +21,7 @@ rule 3 asks for, in the line's own pull request, which waits for it unmerged whi
 | #238 | rule builder | |
 | #244 | rule builder | |
 | #248 | rule builder | #244 and #247 |
-| #254 | rule builder | its second point: #234, #235 and the owner's yes (the review guidelines) |
+| #254 | rule builder | its second point: #234 and #235 |
 | #99 | rule builder | |
 | #170 | builder | |
 | #239 | builder | |
@@ -34,11 +34,11 @@ rule 3 asks for, in the line's own pull request, which waits for it unmerged whi
 | #157 | builder | #247 |
 | #252 | rule builder | #247 |
 | #235 | rule builder | #247 |
-| #249 | rule builder | #247, #235 and the owner's yes (the floor) |
+| #249 | rule builder | #247 and #235 |
 | #250 | rule builder | #249 |
 | #185 | builder | |
 | #246 | rule builder | #247 and the reports of #245 |
-| #253 | rule builder | #247, #246, the reports of #245 and the owner's yes (the review guidelines) |
+| #253 | rule builder | #247, #246 and the reports of #245 |
 | #259 | a builder that built none of the batch | every line above it |
 
 ## Beside any line

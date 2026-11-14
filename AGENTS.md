@@ -38,16 +38,24 @@ builders*: none, every file here being protected (`SECURITY.md`), so there are n
 and what it waits on. A task is a line; its issue is the item and its spec, read with the note that gathers it where
 one says it does, and its conditions stand there. The main lane is the lines in order.
 
-- **An idea is built only from a line, and a line joins in a PR that quotes the owner's yes to its issue.** That PR is
-  the gate: an issue can say the owner agreed as easily as quote it (floor rule 4), so no verdict of the stand-in's
-  queues one here, a difference from `modules/inbox.md`. A bug waits for no line, as that module says. A line leaves in
-  the PR that closes its issue.
+- **An idea is built only from a line, and a line joins in a PR of its own** (core archive 211). A new or changed rule
+  joins only where that PR quotes the owner's yes to its issue, as the chat session records it ("Whose words an issue
+  holds"): that PR is the gate, so no verdict of the stand-in's queues one here, a difference from `modules/inbox.md`.
+  A test, a check for a rule that already stands, a task the scheduled look opens (#248) and a small finding of an
+  audit (#259) join without the owner's word. A bug waits for no line, as that module says. A line leaves in the PR
+  that closes its issue.
+- **Queued means wanted: nothing queued waits for a second word** (core archive 211). Where the floor asks the owner's
+  yes in a PR (floor rule 3: a change to the floor or the review guidelines), the yes the owner gave when its issue was
+  queued is that yes: the builder relays it into the PR word for word (floor rule 4), and it covers the change as the
+  issue describes it. A PR that goes beyond its issue is not covered by it, and the design check says so.
 - **The file holds no note.** Where a module asks for one in the *progress file* (where to pick up after a passed
   gate, a lane that waits), it goes in the description of the line's own PR, which the next builder reads with the
   branch.
 - **Whose words an issue holds.** Of the issues open on 14 November 2026 and labelled `queued` and `by:chat`, the owner
   said the decisions quoted in them are the owner's, and so are the answers on other issues that their notes name.
-  What a session adds to an issue after that day is that session's word (floor rule 4).
+  What the chat session records is the owner's word on any day (core archive 211): an issue or note labelled
+  `by:chat`, or opening as from a chat session with the owner, holds the owner's decisions where it quotes them or
+  says what the owner agreed to. What any other session adds to an issue is that session's word (floor rule 4).
 - **Who builds a line, the line says.** A bug, a test and a check for a rule that already stands go to any builder
   session. A new or changed rule goes to the design session or to a builder on Opus, as its line names. That builder
   writes it from the owner's words quoted on the issue, adds them to the archive as an item of their own, naming the
@@ -58,11 +66,10 @@ one says it does, and its conditions stand there. The main lane is the lines in 
   wake are not this repository's: the sync of the core, since `scripts/core-moved.mjs` and `scripts/sync.mjs` run from
   a project's root and there is no copy here, and what `setup/sync-notes.md` asks, which it asks of projects.
 - **One batch, then one release.** A batch is the lines the file holds between two releases, and the release after it
-  is the owner's ("A release is cut on the owner's word"): no session cuts one by its own choice. For the release that
-  follows `release-5`, and for no other, that word is given (core archive 210): once the file holds no line a session
-  can take, no PR of a session's is open but one that waits only on the owner's yes, and every check on `main`'s
-  newest commit has passed, the session that finds it so, the orchestrator at the end of its work, starts the
-  `release` workflow. Every later release waits for the owner's word again.
+  is the owner's ("A release is cut on the owner's word"): no session cuts one by its own choice. That word is given
+  for every batch (core archive 210 and 211): once the file holds no line a session can take, no PR of a session's is
+  open, every check on `main`'s newest commit has passed, and no open issue is left that is to be queued, the session
+  that finds it so, the orchestrator at the end of its work, starts the `release` workflow.
 - **A batch is sized by what the projects can take:** once its release is synced, the count of "The core is measured
   as a feature is" is taken again in each of the owner's projects and named to the owner, who sizes the next by it. It
   holds back no line the owner has said yes to: there is no pause on new rules.
@@ -73,7 +80,8 @@ one says it does, and its conditions stand there. The main lane is the lines in 
   push after every commit as `modules/git.md` says, then ready, its reviews, their findings fixed and the merge as
   `modules/work-flow.md` says (point 1). A PR that changes a rule says what it changes in every project.
 - **Every PR gets Codex's code and security reviews;** one that changes the floor or the review guidelines needs the
-  owner's yes in it, and waits for it unmerged while its builder takes the next line.
+  owner's yes in it: that of its queued issue ("Queued means wanted"), or, for one that goes beyond it, a new yes, for
+  which it waits unmerged while its builder takes the next line.
 - **The size cap keeps the rules lean and decides nothing else** (`scripts/size.mjs`; core archive 179 and 181): no rule
   is moved from where it belongs, cut short or left out to fit, nor is another rule's reason, name or example cut to
   make room. It rises, one step of a whole KB, only as "A mark on what every session reads" in
@@ -82,7 +90,8 @@ one says it does, and its conditions stand there. The main lane is the lines in 
   fails a raise of more than one step, and one in a PR with no "Leanness check:" comment.
 - **A release is cut on the owner's word** (core archive 195 and 196): another owner's project takes the core only
   from a release (`README.md`, "How a project takes the core", point 1), so one is cut when the owner says the core as
-  it stands may be handed on, about once a week, and never by a session's own choice. The owner tags nothing by hand:
+  it stands may be handed on, never by a session's own choice: the owner's standing word is that it may each time the
+  queue is worked through ("One batch, then one release"). The owner tags nothing by hand:
   the owner, or a session the owner tells and whose own limits let it, starts the `release` workflow on `main` (its
   page under Actions has the button; `.github/workflows/release.yml`; core archive 197), and the workflow cuts it only
   where every check on `main`'s newest commit has passed: the tag `release-N` on that commit, never moved or deleted
