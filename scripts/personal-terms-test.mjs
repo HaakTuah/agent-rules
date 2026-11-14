@@ -209,8 +209,11 @@ const kept = check(pull([[{ "b.md": `${link(term)}\n`, "c.md": `x ${term}\n` }]]
 ok(!kept.passed && /^c\.md:1$/m.test(kept.out) && !/^b\.md:/m.test(kept.out), "a file whose term is only in a session link's id is left out, one beside it still named", kept.out);
 if (process.platform !== "win32") {
   const odd = check(pull([[{ "::notice::odd\nname.md": `x ${term}\n` }]]));
-  ok(!odd.passed && !/^::/m.test(odd.out) && /\?:notice::odd\?name\.md:1/.test(odd.out), "a file's name made like a command is printed as none", odd.out);
+  const [, token, inside] = /^::stop-commands::([0-9a-f]{32})\n([^]*?)^::\1::$/m.exec(odd.out) ?? [];
+  ok(!odd.passed && token && inside === "::notice::odd?name.md:1\n", "a file's name made like a command is printed only where GitHub reads no command", odd.out);
 }
+fails("a term in a line added in Latin-1, taken out again", pull([[{ "b.md": Buffer.from(`caf\u00e9 ${term}\n`, "latin1") }], [{ "b.md": "x\n" }]]));
+passes("a term inside the ids of three session links side by side", pull([[{ "b.md": `${link(term)} ${link(other)} ${link(term)}\n` }]]));
 fails("a term on the same line as a session link, in a file", pull([[{ "b.md": `${link(term)} and ${other}\n` }]]));
 fails("a term on the same line as a session link, in the title", pull([[{ "b.md": "x\n" }]]), { title: `${link(term)} ${term}` });
 passes("a term only in a file whose content is binary (not read: the check's header says so)", pull([[{ "a.bin": `\u0000${term}\u0000` }]]));
