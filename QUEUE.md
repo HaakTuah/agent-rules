@@ -47,7 +47,6 @@ They read and change no rule.
 
 | Issue | Who | Waits on |
 | --- | --- | --- |
-| #245 | builder | |
 | #243 | builder | |
 | #261 | builder | |
 
