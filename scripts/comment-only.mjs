@@ -112,9 +112,10 @@ export function readYaml(text) {
   const bad = UNREAD.exec(text);
   if (bad) return { lines, comments, unread: [`line ${text.slice(0, bad.index).split("\n").length}: a tab, carriage return, byte order mark, another control character or line break, or a character YAML refuses`] };
   const raw = text.split("\n");
-  // in a block scalar: { from, fixed, keep, at, blanks }: the column its text must pass (its key's, or the last "- "'s
-  // where it has no key), whether its indentation is given and its trailing blank lines kept (`|+`), its text's
-  // indentation once read, and the blank lines held until a line of its text follows. Blank lines after its last line
+  // in a block scalar: { from, keep, at, blanks }: the column its text must pass (its key's, or the last "- "'s where it
+  // has no key), whether its trailing blank lines are kept (`|+`), its text's indentation, from its header where given
+  // (one column past `from`, which reads more as text than YAML may, never less) or else once read, and the blank
+  // lines held until a line of its text follows. Blank lines after its last line
   // are no part of it unless kept, nor are they where YAML reads a line of spaces past its indentation as text; and its
   // last line, where the file ends with no line break, is marked, the break being part of the text
   let block = null;
@@ -126,8 +127,8 @@ export function readYaml(text) {
     if (block) {
       if (blank && !(indent > (block.at ?? Infinity))) { block.blanks.push({ n, content: true, text: line }); continue; }
       if (block.at === undefined) {
-        block.at = block.fixed ? block.from + 1 : Math.max(block.from + 1, indent);
-        if (!block.fixed && block.blanks.some(b => b.text.length > indent)) unread.push(`line ${n}: a block scalar's first line less indented than a blank line before it`);
+        block.at = Math.max(block.from + 1, indent);
+        if (indent >= block.at && block.blanks.some(b => b.text.length > indent)) unread.push(`line ${n}: a block scalar's first line less indented than a blank line before it`);
       }
       if (indent >= block.at) {
         lines.push(...block.blanks, { n, content: true, text: line, last: i === raw.length - 1 });
@@ -156,7 +157,10 @@ export function readYaml(text) {
     const note = rest.slice(cut);
     if (note) comments.push({ text: note, at: lines.length, own: false });
     lines.push({ n, indent, items, key, keyCol, kind: value.kind, value: value.text, valueAt, note, text: line.slice(0, indent + cut).replace(/ +$/u, "") });
-    if (value.kind === "block") block = { from: key !== null ? keyCol : dash, fixed: value.fixed, keep: value.text.includes("+"), blanks: [] };
+    if (value.kind === "block") {
+      const from = key !== null ? keyCol : dash;
+      block = { from, at: value.fixed ? from + 1 : undefined, keep: value.text.includes("+"), blanks: [] };
+    }
   }
   if (block) close();
   // one entry a line: a line that is no key and no item continues a value, or stands alone where YAML would read it so;

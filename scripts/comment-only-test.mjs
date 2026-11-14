@@ -161,6 +161,10 @@ unread(`---\n${BASE}`, "a document marker", "document marker");
 unread(edit("  contents: read", "  contents: read: write"), "two keys on one line", "two keys");
 unread(edit("          echo folded", "          echo folded\n        # less indented\n          echo after"), "text after a less indented comment in a block", "a line of its own");
 unread(edit("        run: |\n", "        run: |\n                \n"), "a blank line before a block scalar's first line, with more spaces than it", "less indented than a blank line");
+const spaces = "env:\n  X: |2\n    \n  Y: z\n";
+fails(spaces.replace("    \n", "\n"), "a line of spaces past a given indentation, in a block of nothing else, which YAML reads as its text", "", spaces);
+const empty = "env:\n  X: |\n      \n  Y: z\n";
+passes(empty.replace("  Y", "  # a note\n  Y"), "a comment after a block of blank lines alone, which YAML reads as empty", empty);
 for (const [ch, name] of [["\t", "a tab"], ["\r", "a carriage return"], ["\u2028", "a line separator"], ["\u2029", "a paragraph separator"], ["\u0085", "a next line"], ["\ufeff", "a byte order mark"], ["\u0000", "a null"], ["\uffff", "a character YAML refuses in a file"]]) {
   unread(edit("# A workflow for the test", `# A workflow ${ch}for the test`), `${name}, even in a comment`, "control character");
 }
