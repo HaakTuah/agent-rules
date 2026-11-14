@@ -48,12 +48,15 @@ const OPEN = { ")": "(", "]": "[", "}": "{" };
 // dropped; a template literal is a "str" token for each run of its text, with the code of each ${ } between them.
 export function tokens(src) {
   const out = [], stack = []; // stack: for each open ${ }, how many { are open inside it
+  const parens = []; // for each open (, whether it opens an if, for, while or with's condition
   let i = src.startsWith("#!") ? src.indexOf("\n") : 0, line = 1, prev = null;
   if (i < 0) return out;
   const n = src.length;
   const push = (t, v, l = line) => { prev = { t, v, line: l }; out.push(prev); };
   const lines = (a, b) => { for (let k = a; k < b; k++) if (src[k] === "\n") line++; };
-  const regexHere = () => !prev || (prev.t === "punct" && prev.v !== ")" && prev.v !== "]") || (prev.t === "id" && REGEX_AFTER.has(prev.v));
+  // a / starts a regular expression where no value stands before it: at the start, after an operator, a keyword, or the
+  // ) that closes a condition (`if (x) /a/.test(y)`)
+  const regexHere = () => !prev || (prev.t === "punct" && (prev.v !== ")" || prev.condition) && prev.v !== "]") || (prev.t === "id" && REGEX_AFTER.has(prev.v));
   const template = () => { // from just inside a template's text to its end or its next ${
     const from = line;
     while (i < n) {
@@ -102,7 +105,10 @@ export function tokens(src) {
       stack[stack.length - 1]--;
     }
     if (src.startsWith("=>", i)) { push("punct", "=>"); i += 2; continue; }
+    const condition = c === "(" ? prev?.t === "id" && ["if", "while", "for", "with"].includes(prev.v) || (isId(prev, "await") && isId(out.at(-2), "for")) : false;
+    if (c === "(") parens.push(condition);
     push("punct", c); i++;
+    if (c === ")") prev.condition = parens.pop() === true;
   }
   return out;
 }
@@ -128,13 +134,15 @@ export function imports(toks) {
   return found;
 }
 
-// The names an import or export clause takes, and the module after its `from`; null where none follows it.
+// The names an import or export clause takes, and the module after its `from`; null where none follows it: where the
+// clause ends (its braces close, or an = shows a declaration) with no `from` after it, so a statement with no semicolon
+// never lends its `from` to the one before it.
 function fromClause(toks, k) {
   const names = [];
   let braces = false;
   for (let j = k; j < toks.length && j < k + 400; j++) {
     const tok = toks[j];
-    if (isP(tok, ";")) return null;
+    if (isP(tok, ";") || isP(tok, "=") || (isP(tok, "}") && !isId(toks[j + 1], "from"))) return null;
     if (isId(tok, "from") && !braces && toks[j + 1]?.t === "str") return { spec: toks[j + 1].v, names };
     if (isP(tok, "{")) braces = true;
     else if (isP(tok, "}")) braces = false;
@@ -147,8 +155,8 @@ function fromClause(toks, k) {
   return null;
 }
 
-// Whether a file is a module: it imports, exports or requires (module.exports too); one that does none of these shares its top level with
-// every other such file a page loads.
+// Whether a file is a module: it imports, exports or requires (module.exports too); one that does none of these, a
+// dynamic import aside, shares its top level with every other such file a page loads.
 export function isModule(toks) {
   return toks.some((tok, k) => tok.t === "id" && notMember(toks, k)
     && (tok.v === "export" || (tok.v === "import" && !isP(toks[k + 1], "(")) || (tok.v === "require" && isP(toks[k + 1], "("))
@@ -225,9 +233,9 @@ function blockKind(toks, k, openAt) {
   if (isP(tok, "=>")) return "function";
   if (tok?.t === "id") return CONTROL_BARE.has(tok.v) || tok.v === "catch" ? "control" : "other";
   if (!isP(tok, ")") || !openAt.has(end)) return "other";
-  const before = toks[typeParameters(toks, openAt.get(end)) - 1];
+  const at = typeParameters(toks, openAt.get(end)), before = toks[at - 1];
   if (before?.t !== "id") return "other";
-  return CONTROL.has(before.v) ? "control" : "function";
+  return CONTROL.has(before.v) || (before.v === "await" && isId(toks[at - 2], "for")) ? "control" : "function";
 }
 
 // Where a function's header starts before its parameters' (, its type parameters passed over: the < of `f<T>(a)`.
@@ -325,7 +333,7 @@ export function measure(texts, { depth = 0, commits = [], suites = [], other = {
   for (const file of code) {
     const toks = tokens(texts[file]);
     for (const fn of functions(toks)) fns.push({ file, ...fn });
-    if (!isModule(toks)) { scripts.push({ file, names: globals(toks) }); continue; }
+    if (!isModule(toks)) scripts.push({ file, names: globals(toks) });
     for (const imp of imports(toks)) {
       total++;
       const to = resolve(file, imp.spec, files, packages);
@@ -411,7 +419,9 @@ function main(argv) {
   const texts = {}, other = {};
   for (const f of listed) {
     const ext = path.posix.extname(f);
-    if (CODE.includes(ext) || path.posix.basename(f) === "package.json") { try { texts[f] = fs.readFileSync(path.join(root, f), "utf8"); } catch { /* listed, not on disk */ } }
+    if (CODE.includes(ext) || path.posix.basename(f) === "package.json") { // never through a link, which may lead outside
+      try { if (!fs.lstatSync(path.join(root, f)).isSymbolicLink()) texts[f] = fs.readFileSync(path.join(root, f), "utf8"); } catch { /* listed, not on disk */ }
+    }
     else if (OTHER.includes(ext)) other[ext] = (other[ext] ?? 0) + 1;
   }
   const log = execFileSync("git", ["log", "--no-merges", "-n", String(opts.history), "--format=%x00", "--name-only", "--", ...specs], { cwd: root, encoding: "utf8", maxBuffer: 1 << 28 });

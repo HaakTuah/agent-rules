@@ -31,6 +31,11 @@ const tricky = [
   "};",
 ].join("\n");
 ok(same(fn(tricky), ["a:1:5:0", "b:6:5:4"]), `brackets in comments, strings, templates and regexes are not counted, and blocks nest (${fn(tricky)})`);
+const control = "function c(x) {\n  if (x) /[}]/.test(x);\n  while (x) { if (x) { x--; } }\n  return x;\n}\n";
+ok(same(fn(control), ["c:1:5:2"]), `a regular expression just after a condition's ) is read as one (${fn(control)})`);
+const loop = "async function d(xs) {\n  for await (const x of xs) {\n    if (x) { use(x); }\n  }\n}\n";
+ok(same(fn(loop), ["d:1:5:2"]), `a for await loop is a block, not a function (${fn(loop)})`);
+ok(same(fn("const q = (a) / 2 / (b) / 3;\nfunction e() {\n  return 1;\n}\n"), ["e:2:3:0"]), "a / after an expression's ) is a division");
 ok(same(fn("#!/usr/bin/env node\nexport default async function main() {\n  return 1;\n}\n"), ["main:2:3:0"]), "a hashbang is passed over");
 
 // Every form of a function, TypeScript's return types and type parameters among them.
@@ -70,6 +75,8 @@ ok(same(imps.map(i => `${i.kind} ${i.spec} ${i.names.join(",")}`), [
   "import node:fs default", "import ./x.mjs default,a,b,T", "import ../y *", "import ./types U", "import ./side.css ",
   "export ./z.js d", "export ./w *", "dynamic ./lazy.mjs ", "require ./old ",
 ]), `every form of an import is read, a member's call and a local export not (${imps.map(i => `${i.kind} ${i.spec} ${i.names}`).join("; ")})`);
+const bare = imports(tokens("export { local }\nimport { x } from './x.js'\nexport type T = string\nimport y from './y.js'\n"));
+ok(same(bare.map(i => `${i.kind} ${i.spec} ${i.names.join(",")}`), ["import ./x.js x", "import ./y.js default"]), `with no semicolons, a local export never takes the next statement's from (${bare.map(i => `${i.kind} ${i.spec} ${i.names}`).join("; ")})`);
 ok(!isModule(tokens("var a = 1;\nfunction b() { obj.import('x'); }\n")) && isModule(tokens("module.exports = {};\n")), "a file with no import, export or require is a script; module.exports makes one a module");
 ok(same(globals(tokens("var a = 1, z = 2;\nfunction b() { var inner; }\nclass C {}\nconst d = function named() {};\nlet e;\n(function iife() { var f; })();\n")), ["a", "b", "C", "d", "e"]), "a script's top-level names are read, and nothing inside a function");
 
@@ -89,16 +96,16 @@ const texts = {
   "tools/package.json": "{ \"name\": \"@game/tools\", \"main\": \"index.mjs\" }",
   "tools/helper.mjs": "export const helper = 1;\n",
   "page/one.js": "var shared = 1;\nfunction onlyOne() {}\n",
-  "page/two.js": "var shared = 2;\nfunction onlyTwo() {}\n",
+  "page/two.js": "var shared = 2;\nfunction onlyTwo() {}\nconst later = () => import('../engine/dice.mjs');\n",
 };
 const m = measure(texts, { commits: [["engine/rules.mjs", "engine/dice.mjs"], ["engine/rules.mjs", "engine/dice.mjs", "x.md"], ["engine/rules.mjs", "engine/dice.mjs"], ["engine/rules.mjs"]], other: { ".cs": 2 } });
 ok(m.files.code === 8 && m.files.other[".cs"] === 2, "the code files are counted, and those of other languages named");
-ok(m.imports.total === 10 && m.imports.crossingAFolder === 5 && same(m.imports.external, { lodash: 1 }) && same(m.imports.unresolved, ["ui/menu.ts: ./missing.mjs"]), `imports are counted, those crossing a folder, those from outside and those that lead nowhere apart (${JSON.stringify(m.imports)})`);
+ok(m.imports.total === 11 && m.imports.crossingAFolder === 6 && same(m.imports.external, { lodash: 1 }) && same(m.imports.unresolved, ["ui/menu.ts: ./missing.mjs"]), `imports are counted, those crossing a folder, those from outside and those that lead nowhere apart (${JSON.stringify(m.imports)})`);
 ok(same(m.imports.foldersBothWays, [{ folders: ["engine", "ui"], imports: [1, 3] }]), "two folders that import each other both ways are named, with how many each way");
 ok(same(m.cycles.files, [["engine/dice.mjs", "engine/rules.mjs", "ui/view.mjs"]]) && same(m.cycles.folders, [["engine", "ui"]]), "cycles between files and between folders are found");
-ok(same(m.hubs.map(h => [h.file, h.importedBy, h.names]), [["engine/dice.mjs", 2, ["roll"]], ["engine/rules.mjs", 2, ["rule"]]]), "hubs are the files most import, with the names they give, an import of .js reaching its .ts and one of a package the repository holds reaching it");
-ok(m.globals.scripts === 2 && m.globals.names === 4 && same(m.globals.inMoreThanOne, [{ name: "shared", files: ["page/one.js", "page/two.js"] }]), "a script's global names are counted, and a name two declare is named");
-ok(same(measure(texts, { depth: 1 }).imports.crossingAFolder, 5) && measure({ "a/b/x.mjs": "import './y.mjs';\n", "a/b/y.mjs": "", "a/c/z.mjs": "import '../b/x.mjs';\n" }, { depth: 1 }).imports.crossingAFolder === 0, "with a depth, a folder is the first parts of a path");
+ok(same(m.hubs.map(h => [h.file, h.importedBy, h.names]), [["engine/dice.mjs", 3, ["roll"]], ["engine/rules.mjs", 2, ["rule"]]]), "hubs are the files most import, with the names they give, an import of .js reaching its .ts and one of a package the repository holds reaching it");
+ok(m.globals.scripts === 2 && m.globals.names === 5 && same(m.globals.inMoreThanOne, [{ name: "shared", files: ["page/one.js", "page/two.js"] }]), "a script's global names are counted, and a name two declare is named");
+ok(same(measure(texts, { depth: 1 }).imports.crossingAFolder, 6) && measure({ "a/b/x.mjs": "import './y.mjs';\n", "a/b/y.mjs": "", "a/c/z.mjs": "import '../b/x.mjs';\n" }, { depth: 1 }).imports.crossingAFolder === 0, "with a depth, a folder is the first parts of a path");
 const together = changedTogether([...Array(3).fill(["p", "q"]), Array.from({ length: 31 }, (_, k) => `f${k}`).concat(["p", "q"])], new Set(["p", "q", ...Array.from({ length: 31 }, (_, k) => `f${k}`)]));
 ok(together.commits === 3 && same(together.pairs, [{ files: ["p", "q"], together: 3, share: 1 }]), "files changed together are counted, a commit that touches more than 30 left out");
 ok(same(m.changedTogether.pairs, [{ files: ["engine/dice.mjs", "engine/rules.mjs"], together: 3, share: 1 }]) && m.changedTogether.mostChanged[0].file === "engine/rules.mjs", "a file outside the code read counts in no pair");
@@ -110,6 +117,8 @@ try {
   git("init", "-q");
   git("config", "user.email", "test@example.invalid");
   git("config", "user.name", "Test");
+  git("config", "commit.gpgsign", "false"); // the machine's own git settings sign and hook nothing here
+  git("config", "core.hooksPath", path.join(dir, ".no-hooks"));
   fs.mkdirSync(path.join(dir, "core/scripts"), { recursive: true });
   for (const f of ["code-shape.mjs", "started.mjs"]) fs.copyFileSync(path.join(here, f), path.join(dir, "core/scripts", f));
   fs.mkdirSync(path.join(dir, "src"));
@@ -119,16 +128,21 @@ try {
     git("add", "-A");
     git("commit", "-q", "-m", `change ${k}`);
   }
+  if (process.platform !== "win32") { // a link git holds is never followed, wherever it leads (Windows' git writes none)
+    fs.writeFileSync(path.join(os.tmpdir(), `code-shape-outside-${process.pid}.mjs`), "export const outside = 1;\n");
+    fs.symlinkSync(path.join(os.tmpdir(), `code-shape-outside-${process.pid}.mjs`), path.join(dir, "src/link.mjs"));
+    git("add", "-A");
+  }
   const out = path.join(dir, "out.json");
   const r = spawnSync(process.execPath, [path.join(dir, "core/scripts/code-shape.mjs"), "--suite", "node -e 0", "--suite", "node -e process.exit(3)", "--json", out], { cwd: path.join(dir, "src"), encoding: "utf8" });
   const j = r.status === 0 ? JSON.parse(fs.readFileSync(out, "utf8")) : null;
-  ok(j?.files.code === 2, `a project's own code is read, never the core's copy (${r.stdout}${r.stderr})`);
+  ok(j?.files.code === 2, `a project's own code is read, never the core's copy nor a link (${r.stdout}${r.stderr})`);
   ok(same(j?.changedTogether.pairs, [{ files: ["src/a.mjs", "src/b.mjs"], together: 3, share: 1 }]), "its history is read for what changes together");
   ok(same(j?.suites.map(s => s.passed), [true, false]) && j?.suites.every(s => typeof s.seconds === "number"), "each suite is run alone and timed, and whether it passed is said");
   ok(/imports: 1, 0 crossing a folder/.test(r.stdout) && /suite: node -e process.exit\(3\): [0-9.]+ s, FAILED/.test(r.stdout), "the summary says what it measured");
   const bad = spawnSync(process.execPath, ["core/scripts/code-shape.mjs", "--depth", "two"], { cwd: dir, encoding: "utf8" });
   ok(bad.status === 1 && /FAIL: --depth takes a whole number/.test(bad.stderr), "an option of the wrong shape fails, saying which");
-} finally { fs.rmSync(dir, { recursive: true, force: true }); }
+} finally { fs.rmSync(dir, { recursive: true, force: true }); fs.rmSync(path.join(os.tmpdir(), `code-shape-outside-${process.pid}.mjs`), { force: true }); }
 
 if (failed) { console.error(`${failed} failed`); process.exit(1); }
 console.log("all passed");
