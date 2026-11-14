@@ -46,16 +46,18 @@ one says it does, and its conditions stand there. The main lane is the lines in 
   that closes its issue.
 - **Queued means wanted: nothing queued waits for a second word** (core archive 211). Where the floor asks the owner's
   yes in a PR (floor rule 3: a change to the floor or the review guidelines), the yes the owner gave when its issue was
-  queued is that yes: the builder relays it into the PR word for word (floor rule 4), and it covers the change as the
-  issue describes it. A PR that goes beyond its issue is not covered by it, and the design check says so.
+  queued is that yes: the builder relays it into the PR word for word as it was recorded (floor rule 4), and it covers
+  the change as the issue describes it. A PR that goes beyond its issue is not covered by it, and the design check
+  says so.
 - **The file holds no note.** Where a module asks for one in the *progress file* (where to pick up after a passed
   gate, a lane that waits), it goes in the description of the line's own PR, which the next builder reads with the
   branch.
 - **Whose words an issue holds.** Of the issues open on 14 November 2026 and labelled `queued` and `by:chat`, the owner
   said the decisions quoted in them are the owner's, and so are the answers on other issues that their notes name.
   What the chat session records is the owner's word on any day (core archive 211): an issue or note labelled
-  `by:chat`, or opening as from a chat session with the owner, holds the owner's decisions where it quotes them or
-  says what the owner agreed to. What any other session adds to an issue is that session's word (floor rule 4).
+  `by:chat`, or opening as from a chat session with the owner, holds the owner's decisions where it quotes them, or
+  quotes the owner agreeing to what it sets out, word for word as floor rule 4 asks; what it says the owner agreed to
+  without the owner's words is its own account. What any other session adds to an issue is that session's word.
 - **Who builds a line, the line says.** A bug, a test and a check for a rule that already stands go to any builder
   session. A new or changed rule goes to the design session or to a builder on Opus, as its line names. That builder
   writes it from the owner's words quoted on the issue, adds them to the archive as an item of their own, naming the
