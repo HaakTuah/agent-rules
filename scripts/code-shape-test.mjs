@@ -112,6 +112,7 @@ ok(same(m.changedTogether.pairs, [{ files: ["engine/dice.mjs", "engine/rules.mjs
 
 // A whole run, in a project that holds the core's copy: its own code alone, its history and its suites.
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "code-shape-test-"));
+const outside = fs.mkdtempSync(path.join(os.tmpdir(), "code-shape-outside-")); // what a link leads to, beside the project
 try {
   const git = (...args) => execFileSync("git", args, { cwd: dir, stdio: "ignore" });
   git("init", "-q");
@@ -129,8 +130,8 @@ try {
     git("commit", "-q", "-m", `change ${k}`);
   }
   if (process.platform !== "win32") { // a link git holds is never followed, wherever it leads (Windows' git writes none)
-    fs.writeFileSync(path.join(os.tmpdir(), `code-shape-outside-${process.pid}.mjs`), "export const outside = 1;\n");
-    fs.symlinkSync(path.join(os.tmpdir(), `code-shape-outside-${process.pid}.mjs`), path.join(dir, "src/link.mjs"));
+    fs.writeFileSync(path.join(outside, "outside.mjs"), "export const outside = 1;\n");
+    fs.symlinkSync(path.join(outside, "outside.mjs"), path.join(dir, "src/link.mjs"));
     git("add", "-A");
   }
   const out = path.join(dir, "out.json");
@@ -142,7 +143,7 @@ try {
   ok(/imports: 1, 0 crossing a folder/.test(r.stdout) && /suite: node -e process.exit\(3\): [0-9.]+ s, FAILED/.test(r.stdout), "the summary says what it measured");
   const bad = spawnSync(process.execPath, ["core/scripts/code-shape.mjs", "--depth", "two"], { cwd: dir, encoding: "utf8" });
   ok(bad.status === 1 && /FAIL: --depth takes a whole number/.test(bad.stderr), "an option of the wrong shape fails, saying which");
-} finally { fs.rmSync(dir, { recursive: true, force: true }); fs.rmSync(path.join(os.tmpdir(), `code-shape-outside-${process.pid}.mjs`), { force: true }); }
+} finally { fs.rmSync(dir, { recursive: true, force: true }); fs.rmSync(outside, { recursive: true, force: true }); }
 
 if (failed) { console.error(`${failed} failed`); process.exit(1); }
 console.log("all passed");
