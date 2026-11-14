@@ -111,13 +111,14 @@ export function readYaml(text) {
   const unread = [], lines = [], comments = [];
   const bad = UNREAD.exec(text);
   if (bad) return { lines, comments, unread: [`line ${text.slice(0, bad.index).split("\n").length}: a tab, carriage return, byte order mark, another control character or line break, or a character YAML refuses`] };
-  const raw = text.split("\n");
+  const raw = text.split("\n"), broken = text.endsWith("\n");
+  if (broken) raw.pop(); // (what follows the last line break is no line)
   // in a block scalar: { from, keep, at, blanks }: the column its text must pass (its key's, or the last "- "'s where it
   // has no key), whether its trailing blank lines are kept (`|+`), its text's indentation, from its header where given
   // (one column past `from`, which reads more as text than YAML may, never less) or else once read, and the blank
   // lines held until a line of its text follows. Blank lines after its last line
   // are no part of it unless kept, nor are they where YAML reads a line of spaces past its indentation as text; and its
-  // last line, where the file ends with no line break, is marked, the break being part of the text
+  // last line, a blank one too, where the file ends with no line break, is marked, the break being part of the text
   let block = null;
   const close = () => { if (block.keep) lines.push(...block.blanks); block = null; };
   for (let i = 0; i < raw.length; i++) {
@@ -125,13 +126,13 @@ export function readYaml(text) {
     const indent = /^ */u.exec(line)[0].length;
     const blank = indent === line.length;
     if (block) {
-      if (blank && !(indent > (block.at ?? Infinity))) { block.blanks.push({ n, content: true, text: line }); continue; }
+      if (blank && !(indent > (block.at ?? Infinity))) { block.blanks.push({ n, content: true, text: line, last: i === raw.length - 1 && !broken }); continue; }
       if (block.at === undefined) {
         block.at = Math.max(block.from + 1, indent);
         if (indent >= block.at && block.blanks.some(b => b.text.length > indent)) unread.push(`line ${n}: a block scalar's first line less indented than a blank line before it`);
       }
       if (indent >= block.at) {
-        lines.push(...block.blanks, { n, content: true, text: line, last: i === raw.length - 1 });
+        lines.push(...block.blanks, { n, content: true, text: line, last: i === raw.length - 1 && !broken });
         block.blanks = [];
         continue;
       }

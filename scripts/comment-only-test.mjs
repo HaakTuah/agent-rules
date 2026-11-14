@@ -116,6 +116,10 @@ passes(`${BASE}# end\n`, "a comment added at the end of a file whose last value 
 fails(edit("          EOF\n", "          EOF\n             \n"), "a line of spaces past a block scalar's indentation, which YAML reads as its text");
 const kept = edit("        run: |\n", "        run: |+\n");
 fails(edit("          EOF\n", "          EOF\n\n", kept), "a blank line added after a block scalar whose trailing lines are kept", "", kept);
+for (const [before, after] of [["x: |+\n  a\n\n", "x: |+\n  a\n\n\n# c\n"], ["x: |+\n  a\n  ", "x: |+\n  a\n  \n# c"], ["x: |+\n\n", "x: |+\n\n\n# c\n"], ["x: |2+\n  a\n\n", "x: |2+\n  a\n\n\n# c\n"]]) {
+  fails(after, `a blank line kept by |+ added at the end of the file, a comment after it: ${JSON.stringify(before)}`, "", before);
+}
+passes("x: |+\n  a\n\n# c\n", "a comment added after a block's kept blank lines at the end of the file", "x: |+\n  a\n\n");
 const unbroken = "jobs:\n  a:\n    steps:\n      - run: |\n          echo";
 fails(`${unbroken}\n# end\n`, "a line break added after a block scalar's last line, at the end of the file", "", unbroken);
 const sibling = "jobs:\n  a:\n    steps:\n      - run: |\n        shell: bash\n";
